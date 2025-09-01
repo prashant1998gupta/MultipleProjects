@@ -1,0 +1,15 @@
+# Obfuscate everything by default
+-dontwarn **
+
+# Keep JNI bridge functions if you're using UnityPlayer.UnitySendMessage
+-keep class com.unity3d.** { *; }
+
+# Only keep the specific methods Unity must call
+-keepclassmembers class com.aheaditec.talsec.demoapp.TalsecBridge {
+    public static *;
+}
+-keep class com.aheaditec.talsec.demoapp.TalsecBridge {
+    public static *;
+}
+-keep class com.aheaditec.talsec.demoapp.TalsecBridge {
+    public static boolean isObfuscationMissing();
