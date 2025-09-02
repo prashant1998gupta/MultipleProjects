@@ -73,7 +73,6 @@ public class ItemSpawner : MonoBehaviour
                 previewInstance.transform.position = gridSnap;
             }
 
-            TrySnapToNearbyFurniture();
 
             if (selectedItem != null && selectedItem.category == ItemCategory.Wall)
             {
@@ -81,6 +80,7 @@ public class ItemSpawner : MonoBehaviour
                 return; // skip normal prop placement
             }
 
+            TrySnapToNearbyFurniture();
 
             if (isPreviewing)
             {
