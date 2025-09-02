@@ -16,7 +16,10 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 6107e3c2933aabe43ba7cd44efb0764d, type: 3}
   variantIcons:
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   prefabVariants:
   - {fileID: 4145907121532968656, guid: b6abe504d275f5348b0a45033b1baa71, type: 3}
   - {fileID: 4145907121532968656, guid: 68555d4295d0bdc4aa971b184039175f, type: 3}
+  - {fileID: 6978948652187864926, guid: 1bdabbaad8bde464bb041a4fc3ea7cb4, type: 3}
   category: 7

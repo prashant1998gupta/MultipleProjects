@@ -42,11 +42,7 @@ public class ItemSpawner : MonoBehaviour
             return;
         }
 
-        if (selectedItem != null && selectedItem.category == ItemCategory.Wall)
-        {
-            HandleWallPlacement();
-            return; // skip normal prop placement
-        }
+       
 
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -78,6 +74,13 @@ public class ItemSpawner : MonoBehaviour
             }
 
             TrySnapToNearbyFurniture();
+
+            if (selectedItem != null && selectedItem.category == ItemCategory.Wall)
+            {
+                HandleWallPlacement();
+                return; // skip normal prop placement
+            }
+
 
             if (isPreviewing)
             {
@@ -387,11 +390,15 @@ public class ItemSpawner : MonoBehaviour
 
             wallPreview = new GameObject("Wall_Preview");
             wallPreviewScript = wallPreview.AddComponent<ProceduralWall>();
-            wallPreviewScript.height = 2.5f;
-            wallPreviewScript.thickness = 0.2f;
 
-            var mf = wallPreview.AddComponent<MeshFilter>();
-            var mr = wallPreview.AddComponent<MeshRenderer>();
+            if (selectedItem != null && selectedItem.prefabVariants.Length > 0)
+            {
+                wallPreviewScript.InitFromPrefab(selectedItem.prefabVariants[index]);
+            }
+
+            var mf = wallPreview.GetComponent<MeshFilter>();
+            var mr = wallPreview.GetComponent<MeshRenderer>();
+            Debug.Log($"this is previewMaterial {previewMaterial.name} and mr is {mr.name}");
             mr.sharedMaterial = previewMaterial;
         }
 
@@ -401,10 +408,14 @@ public class ItemSpawner : MonoBehaviour
             dir.y = 0;
             float len = dir.magnitude;
 
-            wallPreview.transform.position = wallStart;
+            // place wall at midpoint
+            Vector3 mid = (wallStart + current) * 0.5f;
+            wallPreview.transform.position = mid;
+
             if (dir.sqrMagnitude > 0.001f)
                 wallPreview.transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
 
+            // set wall length
             wallPreviewScript.length = len;
             wallPreviewScript.Generate();
         }
@@ -418,7 +429,7 @@ public class ItemSpawner : MonoBehaviour
             {
                 if (selectedItem != null && selectedItem.prefabVariants.Length > 0)
                 {
-                    var prefabRenderer = selectedItem.prefabVariants[0].GetComponentInChildren<MeshRenderer>();
+                    var prefabRenderer = selectedItem.prefabVariants[index].GetComponentInChildren<MeshRenderer>();
                     if (prefabRenderer != null)
                     {
                         var mr = wallPreview.GetComponent<MeshRenderer>();
@@ -437,6 +448,9 @@ public class ItemSpawner : MonoBehaviour
 
             wallPreview = null;
             wallPreviewScript = null;
+
+            DestroyPreview();
+            selectedItem = null;
         }
     }
     #endregion

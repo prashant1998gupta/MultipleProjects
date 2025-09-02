@@ -12,6 +12,17 @@ public class ProceduralWall : MonoBehaviour
     Mesh _mesh;
     MeshCollider _meshCollider;
 
+    public void InitFromPrefab(GameObject prefab)
+    {
+        var renderer = prefab.GetComponentInChildren<MeshRenderer>();
+        if (renderer != null)
+        {
+            Vector3 size = renderer.bounds.size;
+            height = size.y;
+            thickness = Mathf.Min(size.x, size.z); // use the thin axis as wall thickness
+        }
+    }
+
     public void SetColliderEnabled1(bool enabled)
     {
         if (enabled)
