@@ -42,20 +42,20 @@ public class ItemSpawner : MonoBehaviour
             return;
         }
 
-       
+
 
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, placementLayer | placementLayerWall))
         {
-          
+
 
             if (previewInstance == null)
                 CreatePreview();
 
 
 
-           
+
             if (((1 << hit.collider.gameObject.layer) & placementLayerWall) != 0)
             {
                 // Wall detected
@@ -107,7 +107,7 @@ public class ItemSpawner : MonoBehaviour
 
             if (!isValid)
             {
-              SetPreviewColor(Color.cyan);
+                SetPreviewColor(Color.cyan);
             }
             else
             {
@@ -126,7 +126,7 @@ public class ItemSpawner : MonoBehaviour
                 }
             }
 
-           
+
         }
         else
         {
@@ -215,8 +215,8 @@ public class ItemSpawner : MonoBehaviour
         }
 
         // Optional: disable colliders
-       // foreach (var col in previewInstance.GetComponentsInChildren<Collider>())
-       //     col.enabled = false;
+        // foreach (var col in previewInstance.GetComponentsInChildren<Collider>())
+        //     col.enabled = false;
     }
 
     void DestroyPreview()
@@ -234,7 +234,7 @@ public class ItemSpawner : MonoBehaviour
         DestroyPreview(); // Replace previous preview with new item
     }
 
-    public void SetSelectedItemVariant(ItemData item , int index)
+    public void SetSelectedItemVariant(ItemData item, int index)
     {
         selectedItem = item;
         this.index = index;
@@ -404,19 +404,18 @@ public class ItemSpawner : MonoBehaviour
 
         if (isDraggingWall && Input.GetMouseButton(0) && RayToGround(out Vector3 current))
         {
-            Vector3 dir = current - wallStart;
-            dir.y = 0;
-            float len = dir.magnitude;
-
-            // place wall at midpoint
-            Vector3 mid = (wallStart + current) * 0.5f;
-            wallPreview.transform.position = mid;
-
+            Vector3 dir = current - wallStart; 
+            dir.y = 0; 
+            float len = dir.magnitude; 
+            wallPreview.transform.position = wallStart; 
             if (dir.sqrMagnitude > 0.001f)
-                wallPreview.transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
-
-            // set wall length
-            wallPreviewScript.length = len;
+            {
+                wallPreview.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+                wallPreview.transform.Rotate(0, -90f, 0); // rotate 90° so length (X) points forward
+            }
+                //wallPreview.transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up); 
+            
+            wallPreviewScript.length = len; 
             wallPreviewScript.Generate();
         }
 

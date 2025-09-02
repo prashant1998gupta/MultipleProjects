@@ -74,9 +74,13 @@ public class ProceduralWall : MonoBehaviour
         float T = Mathf.Max(thickness, 0.01f);
 
         // Pivot centered like many FBX walls: x ∈ [-L/2, +L/2], y ∈ [0, H], z ∈ [-T/2, +T/2]
-        float x0 = -L * 0.5f, x1 = L * 0.5f;
+        float x0 = 0f, x1 = L;
         float y0 = 0f, y1 = H;
         float z0 = -T * 0.5f, z1 = T * 0.5f;
+
+        /* float z0 = 0f, z1 = L;
+         float y0 = 0f, y1 = H;
+         float x0 = -T * 0.5f, x1 = T * 0.5f;*/
 
         // 6 quads * 4 verts each
         var v = new Vector3[24];
