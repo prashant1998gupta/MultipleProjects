@@ -381,6 +381,7 @@ public class ItemSpawner : MonoBehaviour
     GameObject wallPreview;
     ProceduralWall wallPreviewScript;
 
+    #region use this one time and for reuse than select from start 
     void HandleWallPlacement()
     {
         if (Input.GetMouseButtonDown(0) && RayToGround(out Vector3 start))
@@ -452,6 +453,102 @@ public class ItemSpawner : MonoBehaviour
             selectedItem = null;
         }
     }
+    #endregion
+
+    #region build multiple connected wall segments (click → drag → release → keep building from last endpoint)
+    public KeyCode cancelKey = KeyCode.Escape;
+    void HandleWallPlacement1()
+    {
+        // Start new chain
+        if (!isDraggingWall && Input.GetMouseButtonDown(0) && RayToGround(out Vector3 start))
+        {
+            wallStart = start;
+            isDraggingWall = true;
+            BeginWallPreview();
+        }
+
+        // While dragging
+        if (isDraggingWall && Input.GetMouseButton(0) && RayToGround(out Vector3 current))
+        {
+            UpdateWallPreview(current);
+        }
+
+        // Finish one segment
+        if (isDraggingWall && Input.GetMouseButtonUp(0) && RayToGround(out Vector3 end))
+        {
+            FinalizeWallSegment();
+
+            // ✅ Start new segment chain automatically
+            wallStart = end;
+            BeginWallPreview();
+        }
+
+        // Cancel entire chain (Esc or RMB)
+        if (isDraggingWall && (Input.GetKeyDown(cancelKey) || Input.GetMouseButtonDown(1)))
+        {
+            isDraggingWall = false;
+            Destroy(wallPreview);
+            wallPreview = null;
+            wallPreviewScript = null;
+        }
+    }
+    void BeginWallPreview()
+    {
+        wallPreview = new GameObject("Wall_Preview");
+        var mf = wallPreview.AddComponent<MeshFilter>();
+        var mr = wallPreview.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = previewMaterial;
+
+        wallPreviewScript = wallPreview.AddComponent<ProceduralWall>();
+        if (selectedItem != null && selectedItem.prefabVariants.Length > 0)
+        {
+            wallPreviewScript.InitFromPrefab(selectedItem.prefabVariants[0]);
+        }
+    }
+    void UpdateWallPreview(Vector3 current)
+    {
+        Vector3 dir = current - wallStart;
+        dir.y = 0;
+        float len = dir.magnitude;
+
+        wallPreview.transform.position = wallStart;
+        if (dir.sqrMagnitude > 0.001f)
+        {
+            wallPreview.transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
+            wallPreview.transform.Rotate(0, -90f, 0); // because mesh grows on X
+        }
+
+        wallPreviewScript.length = len;
+        wallPreviewScript.Generate();
+    }
+    void FinalizeWallSegment()
+    {
+        if (wallPreviewScript.length > 0.1f)
+        {
+            if (selectedItem != null && selectedItem.prefabVariants.Length > 0)
+            {
+                var prefabRenderer = selectedItem.prefabVariants[0].GetComponentInChildren<MeshRenderer>();
+                if (prefabRenderer != null)
+                {
+                    var mr = wallPreview.GetComponent<MeshRenderer>();
+                    mr.sharedMaterial = prefabRenderer.sharedMaterial;
+                }
+            }
+
+            wallPreviewScript.SetColliderEnabled(true);
+            wallPreview.name = "Wall_Segment";
+            SetLayerRecursively(wallPreview, LayerMask.NameToLayer("PlacedItem"));
+        }
+        else
+        {
+            Destroy(wallPreview);
+        }
+
+        wallPreview = null;
+        wallPreviewScript = null;
+    }
+    #endregion
+
     #endregion
 
     bool RayToGround(out Vector3 pos)
