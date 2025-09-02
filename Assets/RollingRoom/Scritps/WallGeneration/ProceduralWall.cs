@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -62,16 +62,18 @@ public class ProceduralWall : MonoBehaviour
         float H = Mathf.Max(height, 0.01f);
         float T = Mathf.Max(thickness, 0.01f);
 
-        // prism from x:0..L, y:0..H, z:-T/2..+T/2 (local +Z is one face)
-        float x0 = 0f, x1 = L;
+        // Pivot centered like many FBX walls: x ∈ [-L/2, +L/2], y ∈ [0, H], z ∈ [-T/2, +T/2]
+        float x0 = -L * 0.5f, x1 = L * 0.5f;
         float y0 = 0f, y1 = H;
         float z0 = -T * 0.5f, z1 = T * 0.5f;
 
-        Vector3[] v = new Vector3[24];
-        Vector3[] n = new Vector3[24];
-        Vector2[] uv = new Vector2[24];
+        // 6 quads * 4 verts each
+        var v = new Vector3[24];
+        var n = new Vector3[24];
+        var uv = new Vector2[24];
         int vi = 0;
 
+        // Add a quad with vertices listed COUNTER-CLOCKWISE as seen from the outside.
         void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal, float uMeters, float vMeters)
         {
             v[vi + 0] = a; v[vi + 1] = b; v[vi + 2] = c; v[vi + 3] = d;
@@ -94,33 +96,39 @@ public class ProceduralWall : MonoBehaviour
             vi += 4;
         }
 
-        // faces: front, back, left, right, bottom, top
-        Quad(new Vector3(x0, y0, z1), new Vector3(x1, y0, z1), new Vector3(x1, y1, z1), new Vector3(x0, y1, z1), Vector3.forward, L, H);
-        Quad(new Vector3(x1, y0, z0), new Vector3(x0, y0, z0), new Vector3(x0, y1, z0), new Vector3(x1, y1, z0), Vector3.back, L, H);
-        Quad(new Vector3(x0, y0, z0), new Vector3(x0, y0, z1), new Vector3(x0, y1, z1), new Vector3(x0, y1, z0), Vector3.left, T, H);
-        Quad(new Vector3(x1, y0, z1), new Vector3(x1, y0, z0), new Vector3(x1, y1, z0), new Vector3(x1, y1, z1), Vector3.right, T, H);
-        Quad(new Vector3(x0, y0, z0), new Vector3(x1, y0, z0), new Vector3(x1, y0, z1), new Vector3(x0, y0, z1), Vector3.down, L, T);
-        Quad(new Vector3(x0, y1, z1), new Vector3(x1, y1, z1), new Vector3(x1, y1, z0), new Vector3(x0, y1, z0), Vector3.up, L, T);
+        // Faces (CCW from outside):
+        // +Z (front), -Z (back), -X (left), +X (right), -Y (bottom), +Y (top)
+        Quad(new Vector3(x0, y0, z1), new Vector3(x1, y0, z1), new Vector3(x1, y1, z1), new Vector3(x0, y1, z1), Vector3.forward, L, H); // front
+        Quad(new Vector3(x1, y0, z0), new Vector3(x0, y0, z0), new Vector3(x0, y1, z0), new Vector3(x1, y1, z0), Vector3.back, L, H); // back
+        Quad(new Vector3(x0, y0, z0), new Vector3(x0, y0, z1), new Vector3(x0, y1, z1), new Vector3(x0, y1, z0), Vector3.left, T, H); // left
+        Quad(new Vector3(x1, y0, z1), new Vector3(x1, y0, z0), new Vector3(x1, y1, z0), new Vector3(x1, y1, z1), Vector3.right, T, H); // right
+        Quad(new Vector3(x0, y0, z0), new Vector3(x1, y0, z0), new Vector3(x1, y0, z1), new Vector3(x0, y0, z1), Vector3.down, L, T); // bottom
+        Quad(new Vector3(x0, y1, z1), new Vector3(x1, y1, z1), new Vector3(x1, y1, z0), new Vector3(x0, y1, z0), Vector3.up, L, T); // top
 
+        // 2 tris per quad, CCW
         int[] tris = new int[36];
         for (int f = 0; f < 6; f++)
         {
             int baseVi = f * 4;
             int ti = f * 6;
             tris[ti + 0] = baseVi + 0;
-            tris[ti + 1] = baseVi + 2;
-            tris[ti + 2] = baseVi + 1;
+            tris[ti + 1] = baseVi + 1;
+            tris[ti + 2] = baseVi + 2;
             tris[ti + 3] = baseVi + 0;
-            tris[ti + 4] = baseVi + 3;
-            tris[ti + 5] = baseVi + 2;
+            tris[ti + 4] = baseVi + 2;
+            tris[ti + 5] = baseVi + 3;
         }
 
         _mesh.vertices = v;
         _mesh.triangles = tris;
         _mesh.normals = n;
         _mesh.uv = uv;
+
         _mesh.RecalculateBounds();
+        _mesh.RecalculateNormals();   // keep lighting consistent
+        _mesh.RecalculateTangents();  // match FBX shading with normal maps
     }
+
 
 #if UNITY_EDITOR
     void OnValidate()

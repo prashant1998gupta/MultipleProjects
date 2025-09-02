@@ -10,6 +10,7 @@ public enum ItemCategory
     Curtains,
     Food,
     KitchenProps,
+    Wall
    /* Appliances,
     Cabinets,
     Furnitures,

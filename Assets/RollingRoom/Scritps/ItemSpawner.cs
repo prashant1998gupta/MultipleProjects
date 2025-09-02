@@ -42,6 +42,13 @@ public class ItemSpawner : MonoBehaviour
             return;
         }
 
+        if (selectedItem != null && selectedItem.category == ItemCategory.Wall)
+        {
+            HandleWallPlacement();
+            return; // skip normal prop placement
+        }
+
+
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, placementLayer | placementLayerWall))
         {
@@ -363,5 +370,88 @@ public class ItemSpawner : MonoBehaviour
         }
 #endif
     }
+
+
+    #region Wall Placement
+    Vector3 wallStart;
+    bool isDraggingWall;
+    GameObject wallPreview;
+    ProceduralWall wallPreviewScript;
+
+    void HandleWallPlacement()
+    {
+        if (Input.GetMouseButtonDown(0) && RayToGround(out Vector3 start))
+        {
+            wallStart = start;
+            isDraggingWall = true;
+
+            wallPreview = new GameObject("Wall_Preview");
+            wallPreviewScript = wallPreview.AddComponent<ProceduralWall>();
+            wallPreviewScript.height = 2.5f;
+            wallPreviewScript.thickness = 0.2f;
+
+            var mf = wallPreview.AddComponent<MeshFilter>();
+            var mr = wallPreview.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = previewMaterial;
+        }
+
+        if (isDraggingWall && Input.GetMouseButton(0) && RayToGround(out Vector3 current))
+        {
+            Vector3 dir = current - wallStart;
+            dir.y = 0;
+            float len = dir.magnitude;
+
+            wallPreview.transform.position = wallStart;
+            if (dir.sqrMagnitude > 0.001f)
+                wallPreview.transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
+
+            wallPreviewScript.length = len;
+            wallPreviewScript.Generate();
+        }
+
+        if (isDraggingWall && Input.GetMouseButtonUp(0))
+        {
+            isDraggingWall = false;
+
+            // finalize
+            if (wallPreviewScript.length > 0.1f)
+            {
+                if (selectedItem != null && selectedItem.prefabVariants.Length > 0)
+                {
+                    var prefabRenderer = selectedItem.prefabVariants[0].GetComponentInChildren<MeshRenderer>();
+                    if (prefabRenderer != null)
+                    {
+                        var mr = wallPreview.GetComponent<MeshRenderer>();
+                        mr.sharedMaterial = prefabRenderer.sharedMaterial;
+                    }
+                }
+                wallPreviewScript.SetColliderEnabled(true);
+
+                wallPreview.name = "Wall_Segment";
+                SetLayerRecursively(wallPreview, LayerMask.NameToLayer("PlacedItem"));
+            }
+            else
+            {
+                Destroy(wallPreview); // too short
+            }
+
+            wallPreview = null;
+            wallPreviewScript = null;
+        }
+    }
+    #endregion
+
+    bool RayToGround(out Vector3 pos)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, 200f, placementLayer))
+        {
+            pos = GridSnapper.Snap(hit.point, 0.5f); // snap to 0.5 grid
+            return true;
+        }
+        pos = Vector3.zero;
+        return false;
+    }
+
 
 }
