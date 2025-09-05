@@ -376,13 +376,14 @@ public class ItemSpawner : MonoBehaviour
 
 
     #region Wall Placement
+
     Vector3 wallStart;
     bool isDraggingWall;
     GameObject wallPreview;
     ProceduralWall wallPreviewScript;
 
     #region use this one time and for reuse than select from start 
-    void HandleWallPlacement()
+    void HandleWallPlacement1()
     {
         if (Input.GetMouseButtonDown(0) && RayToGround(out Vector3 start))
         {
@@ -457,7 +458,7 @@ public class ItemSpawner : MonoBehaviour
 
     #region build multiple connected wall segments (click → drag → release → keep building from last endpoint)
     public KeyCode cancelKey = KeyCode.Escape;
-    void HandleWallPlacement1()
+    void HandleWallPlacement()
     {
         // Start new chain
         if (!isDraggingWall && Input.GetMouseButtonDown(0) && RayToGround(out Vector3 start))
@@ -484,12 +485,14 @@ public class ItemSpawner : MonoBehaviour
         }
 
         // Cancel entire chain (Esc or RMB)
-        if (isDraggingWall && (Input.GetKeyDown(cancelKey) || Input.GetMouseButtonDown(1)))
+        if (isDraggingWall && (Input.GetKeyDown(cancelKey) /*|| Input.GetMouseButtonDown(1)*/))
         {
             isDraggingWall = false;
             Destroy(wallPreview);
             wallPreview = null;
             wallPreviewScript = null;
+            DestroyPreview();
+            selectedItem = null;
         }
     }
     void BeginWallPreview()
@@ -548,9 +551,6 @@ public class ItemSpawner : MonoBehaviour
         wallPreviewScript = null;
     }
     #endregion
-
-    #endregion
-
     bool RayToGround(out Vector3 pos)
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -563,5 +563,5 @@ public class ItemSpawner : MonoBehaviour
         return false;
     }
 
-
+    #endregion
 }
